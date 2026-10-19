@@ -56,4 +56,8 @@ Use Node.js 22.x and Python 3.11+. Node tests cover route allowlists, origin val
 
 `server.py` and `bridge.py` need only the Python standard library. `ssh2` is the server-side Node dependency; its version is locked.
 
+## VPS publishing automation
+
+The `automation/` directory versions the existing VPS planner and its publishing guards. These scripts run in the existing `tweetytweets` environment on the VPS, not in Vercel. See [automation/README.md](automation/README.md) for the current content strategy and deployment notes.
+
 Never commit passwords, private keys, auth files, cookies, cron reports, generated credential bundles or populated environment files. `.gitignore` excludes these and build/dependency output. `.env.example` contains placeholders only.
