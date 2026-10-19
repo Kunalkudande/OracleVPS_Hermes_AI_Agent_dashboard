@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+auth.json
+*.log
+node_modules/
+dist/
+.vercel/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*-private-key.txt
+login.txt
+vercel-settings.txt
+# Existing machine-specific launcher is kept locally, not deployed to Vercel.
+Open-HermesDashboard.ps1

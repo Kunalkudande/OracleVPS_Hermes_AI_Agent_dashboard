@@ -1,0 +1,13 @@
+{
+  "name": "hermes-control-room",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "22.x" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/transport.test.mjs",
+    "test:backend": "python -m unittest discover -p \"test_*.py\" -v"
+  },
+  "dependencies": { "ssh2": "1.17.0" }
+}

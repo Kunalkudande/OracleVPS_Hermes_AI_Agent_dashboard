@@ -1,0 +1,21 @@
+[Unit]
+Description=Hermes private control dashboard
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/hermes-control
+ExecStart=/usr/bin/python3 %h/hermes-control/server.py
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=%h/.local/state/hermes-control %h/.hermes/cron
+ReadOnlyPaths=%h/hermes-control
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=default.target
