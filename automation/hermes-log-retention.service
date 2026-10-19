@@ -1,0 +1,13 @@
+[Unit]
+Description=Clean silent X publisher reports older than 48 hours
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 %h/hermes-control/cleanup_publisher_logs.py --apply
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=%h/.hermes/cron/output/d92bae72a243
+UMask=0077
+MemoryMax=64M
+TasksMax=8

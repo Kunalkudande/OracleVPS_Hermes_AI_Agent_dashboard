@@ -25,3 +25,11 @@ cd ~/tweetytweets/scripts
 ```
 
 The planner test simulates an HTTP 413 and verifies compact recovery, original scheduled times, published-post preservation and reuse of reviewed drafts. Content-quality checks catch some repetitive patterns; human review is still useful for taste, originality and factual accuracy. No growth or engagement outcome is guaranteed.
+
+## Silent-check log retention
+
+`cleanup_publisher_logs.py` removes only exact empty/silent publisher reports older than 48 hours, using both report time and file modification time. It checks only the known publisher's output directory, rejects symlinks and unexpected content, and never accesses draft plans or publication receipts. Run it without `--apply` to preview.
+
+The supplied `hermes-log-retention.timer` runs hourly, with up to two minutes of jitter and a persistent catch-up after downtime. Deploy the cleanup script under `~/hermes-control/`, install the two unit files under `~/.config/systemd/user/`, then enable the timer. The cleanup service can write only to this publisher's report directory. Hermes' existing count-based pruning stays in place, so reports can be removed sooner by that separate policy. Errors and publishing reports are not deleted by this age-based cleanup.
+
+Test retention with `python -m unittest test_log_retention -v` from this directory.

@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly retention check for silent X publisher reports
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=2min
+Persistent=true
+Unit=hermes-log-retention.service
+
+[Install]
+WantedBy=timers.target
