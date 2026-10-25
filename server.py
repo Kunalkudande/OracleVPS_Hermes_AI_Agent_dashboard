@@ -16,6 +16,7 @@ import subprocess
 import threading
 import time
 from urllib.parse import urlsplit, unquote
+from personal import Personal
 
 ROOT = Path(__file__).resolve().parent
 SAFE = re.compile(r"^[a-zA-Z0-9_-]{1,100}$")
@@ -49,10 +50,32 @@ def parse_time(value):
         return None
 
 
+def publication_status(slot, claim):
+    if claim.get('status') == 'uncertain':
+        return 'uncertain'
+    if slot.get('tweet_url') or (claim.get('status') == 'verified' and claim.get('url')):
+        return 'published'
+    if slot.get('skipped'):
+        return 'skipped'
+    if claim.get('status') == 'failed':
+        return 'failed'
+    if slot.get('posted'):
+        return 'unknown'
+    return 'ready' if str(slot.get('text') or '').strip() else 'empty'
+
+
 class Hermes:
     def __init__(self, home, xroot, cli, audit):
         self.home, self.xroot, self.cli, self.audit = Path(home), Path(xroot), cli, Path(audit)
         self.action_lock = threading.Lock()
+
+    def personal(self):
+        return Personal(self.audit.parent / 'personal')
+
+    def workspace(self):
+        personal = self.personal()
+        return {'briefing': personal.report('briefing'), 'analyst': personal.report('analyst'),
+                'knowledge': personal.search()}
 
     def jobs(self):
         data = read_json(self.home / "cron/jobs.json")
@@ -143,6 +166,13 @@ class Hermes:
             services.append({"name": name, "status": state, "note": "Process state only; does not verify task completion."})
         posts = []
         today = now.astimezone(IST).date().isoformat()
+        try:
+            journal = read_json(self.xroot / "autopublish-state.json")
+            if not isinstance(journal, dict):
+                raise ValueError('Invalid publishing ledger')
+        except (OSError, ValueError):
+            journal = {}
+            warnings.append("X publication receipt ledger unavailable")
         for date in [today, (now.astimezone(IST).date() + timedelta(days=1)).isoformat()]:
             try:
                 plan_path = self.xroot / "drafts" / (date + ".json")
@@ -151,20 +181,19 @@ class Hermes:
                 plan = read_json(plan_path)
                 for slot in plan.get("slots", []):
                     text = str(slot.get("text") or "")
+                    claim = journal.get(date + '/' + str(slot.get('slot')), {})
                     posts.append({"date": date, "slot": slot.get("slot"), "due_at": slot.get("due_at"), "text": text,
-                                  "bucket": slot.get("bucket") or slot.get("kind") or "Draft", "url": slot.get("tweet_url"),
-                                  "status": "published" if slot.get("posted") else "ready" if text.strip() else "empty"})
+                                  "bucket": slot.get("bucket") or slot.get("kind") or "Draft", "url": slot.get("tweet_url") or claim.get('url'),
+                                  "status": publication_status(slot, claim)})
+                    if claim.get('status') == 'failed' and not slot.get('skipped'):
+                        issues.append({'title': 'X draft failed preflight', 'detail': scrub(claim.get('error', 'Publishing checks failed'))[:800], 'job_id': 'd92bae72a243'})
             except FileNotFoundError:
                 warnings.append("No X plan saved for " + date)
             except (OSError, ValueError, TypeError, AttributeError):
                 warnings.append("X plan unreadable for " + date)
-        try:
-            journal = read_json(self.xroot / "autopublish-state.json")
-            for key, item in journal.items():
-                if isinstance(item, dict) and item.get("status") == "uncertain":
-                    issues.append({"title": "X publication needs review", "detail": "Submission " + key + " has no verified receipt. It must not be resubmitted blindly.", "job_id": "d92bae72a243"})
-        except (OSError, ValueError, AttributeError):
-            warnings.append("X publication receipt ledger unavailable")
+        for key, item in journal.items():
+            if isinstance(item, dict) and item.get("status") == "uncertain":
+                issues.append({"title": "X publication needs review", "detail": "Submission " + key + " has no verified receipt. It must not be resubmitted blindly.", "job_id": "d92bae72a243"})
         try:
             metrics = read_json(self.xroot / "metrics/summary.json")
         except (OSError, ValueError):
@@ -292,6 +321,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(200, {"csrf": session["csrf"]})
             if path == "/api/status":
                 return self.respond(200, self.server.backend.snapshot())
+            if path == "/api/workspace":
+                return self.respond(200, self.server.backend.workspace())
             match = re.fullmatch(r"/api/reports/([\w-]+)/([\w.-]+)", path)
             if match:
                 return self.respond(200, {"text": self.server.backend.output(*match.groups())})
@@ -354,6 +385,19 @@ class Handler(BaseHTTPRequestHandler):
             with self.server.lock:
                 self.server.sessions.pop(token, None)
             return self.respond(200, {"ok": True}, cookie="hermes_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0")
+        if path in ('/api/knowledge/search', '/api/knowledge/save'):
+            try:
+                personal = self.server.backend.personal()
+                if path.endswith('/search'):
+                    return self.respond(200, personal.search(body.get('question', '')))
+                identity = personal.save(scrub(body.get('title', '')) if isinstance(body.get('title'), str) else None,
+                                         scrub(body.get('text', '')) if isinstance(body.get('text'), str) else None,
+                                         body.get('url', ''))
+                return self.respond(200, {'ok': True, 'id': identity})
+            except ValueError as error:
+                return self.respond(400, {'error': str(error)})
+            except Exception:
+                return self.respond(503, {'error': 'The library could not be read or saved. Try again.'})
         match = re.fullmatch(r"/api/jobs/([\w-]+)/(pause|resume)", path)
         if not match:
             return self.respond(404, {"error": "Not found"})

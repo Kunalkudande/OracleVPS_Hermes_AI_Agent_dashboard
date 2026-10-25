@@ -15,6 +15,14 @@ The sign-in page deploys without secrets, but live API access returns a setup me
 
 ## Features
 
+- **Today:** a saved morning briefing at 08:00 IST with recent saved research,
+  scheduled work, publishing status and attention items.
+- **Content analyst:** a saved Sunday 18:00 IST review with sample sizes, missing
+  counters and conservative editorial experiments. Uses cumulative metrics, not
+  a weekly cohort; never changes the publishing plan automatically.
+- **Knowledge:** saved notes and imported research with keyword search, source
+  passages and links. Conversational synthesis is available through the installed
+  `hermes-personal-operations` Hermes skill. Dashboard search displays excerpts.
 - **Overview:** active/paused jobs, latest errors, next runs and scheduler heartbeat freshness.
 - **Automations:** pause/resume future runs with confirmation, saved-state verification and an action audit. Running tasks continue.
 - **X publishing:** today's and tomorrow's drafts, missing slots, saved post URLs, uncertain-submission warnings and existing engagement summaries. The dashboard does not submit posts.
@@ -61,3 +69,6 @@ Use Node.js 22.x and Python 3.11+. Node tests cover route allowlists, origin val
 The `automation/` directory versions the existing VPS planner and its publishing guards. These scripts run in the existing `tweetytweets` environment on the VPS, not in Vercel. See [automation/README.md](automation/README.md) for the current content strategy and deployment notes.
 
 Never commit passwords, private keys, auth files, cookies, cron reports, generated credential bundles or populated environment files. `.gitignore` excludes these and build/dependency output. `.env.example` contains placeholders only.
+
+See [PERSONAL_OPERATIONS.md](PERSONAL_OPERATIONS.md) for the personal workflows,
+installed schedule identifiers, storage and recovery instructions.

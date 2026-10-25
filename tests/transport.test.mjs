@@ -9,6 +9,11 @@ const env = { HERMES_SSH_HOST: 'example.invalid', HERMES_SSH_USER: 'ubuntu',
 test('only specific dashboard API operations are forwarded', () => {
   for (const route of ['/api/status', '/api/session', '/api/reports/job-id/2026-10-19_00-00-00.md']) assert.ok(allowedRoute('GET', route));
   assert.ok(allowedRoute('POST', '/api/jobs/job-id/pause'));
+  assert.ok(allowedRoute('GET', '/api/workspace'));
+  assert.ok(allowedRoute('POST', '/api/knowledge/search'));
+  assert.ok(allowedRoute('POST', '/api/knowledge/save'));
+  assert.equal(allowedRoute('GET', '/api/knowledge/save'), false);
+  assert.equal(allowedRoute('POST', '/api/knowledge/delete'), false);
   for (const route of ['/api/jobs/job-id/run', '/api/reports/job-id/../../auth.json', '/api/status?target=localhost', '/api/config']) {
     assert.equal(allowedRoute('POST', route), false); assert.equal(allowedRoute('GET', route), false);
   }

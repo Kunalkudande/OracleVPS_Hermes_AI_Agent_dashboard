@@ -8,6 +8,11 @@ class BridgeTests(unittest.TestCase):
 
     def test_only_dashboard_routes(self):
         self.assertEqual(validate(self.request())["path"], "/api/status")
+        data = self.request(); data['path'] = '/api/workspace'
+        self.assertEqual(validate(data)['path'], '/api/workspace')
+        for path in ['/api/knowledge/search', '/api/knowledge/save']:
+            data = self.request(); data.update(method='POST', path=path, body='{}')
+            self.assertEqual(validate(data)['path'], path)
         for path in ["/api/config", "/api/reports/a/../../auth.json", "http://localhost/", "/api/status?url=x"]:
             data=self.request(); data["path"]=path
             with self.assertRaises(ValueError): validate(data)

@@ -8,10 +8,31 @@ import tempfile
 import threading
 import unittest
 from unittest.mock import patch
-from server import App, Hermes, scrub
+from server import App, Hermes, scrub, publication_status
 
 
 class DashboardTests(unittest.TestCase):
+    def test_personal_routes_require_auth_csrf_and_save_recall(self):
+        self.assertEqual(self.request('/api/workspace')[0], 401)
+        self.login()
+        self.assertEqual(self.request('/api/knowledge/save', {'title': 'Memory', 'text': 'Source-backed agent memory'}, csrf=False)[0], 403)
+        code, data, _ = self.request('/api/knowledge/save', {'title': 'Memory', 'text': 'Source-backed agent memory'})
+        self.assertEqual(code, 200)
+        code, data, _ = self.request('/api/knowledge/search', {'question': 'agent memory'})
+        self.assertEqual(code, 200)
+        self.assertEqual(data['results'][0]['title'], 'Memory')
+        self.assertEqual(self.request('/api/knowledge/save', {'title': [], 'text': 'bad'})[0], 400)
+        code, data, _ = self.request('/api/workspace')
+        self.assertEqual(code, 200)
+        self.assertEqual(data['knowledge']['total'], 1)
+
+    def test_retired_and_uncertain_slots_are_not_published(self):
+        self.assertEqual(publication_status({'posted':True,'skipped':'overdue'},{}),'skipped')
+        self.assertEqual(publication_status({'posted':True},{'status':'uncertain'}),'uncertain')
+        self.assertEqual(publication_status({'text':'draft'},{'status':'failed'}),'failed')
+        self.assertEqual(publication_status({'posted':True},{}),'unknown')
+        self.assertEqual(publication_status({}, {'status':'verified','url':'https://x.com/account/status/1'}),'published')
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
