@@ -74,7 +74,7 @@ setInterval(()=>{if(!document.hidden&&csrf)refresh();},30000);document.addEventL
 
 function openHermes(force=false) {
  const frame=$('hermes-frame');
- if(force||!frame.getAttribute('src')){$('hermes-loading').hidden=false;frame.src='/hermes/';}
+ if(force||!frame.getAttribute('src')){$('hermes-loading').hidden=false;frame.src='/hermes/index.html';}
 }
 $('hermes-reload').addEventListener('click',()=>openHermes(true));
 $('hermes-frame').addEventListener('load',()=>{$('hermes-loading').hidden=true;});
