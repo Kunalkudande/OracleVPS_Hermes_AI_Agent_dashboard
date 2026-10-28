@@ -1,5 +1,6 @@
 """Hermes Control: private, loopback-only dashboard. Python 3.11+, no packages."""
 import argparse
+import base64
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 import hashlib
@@ -289,6 +290,56 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def webui(self):
+        from webui_bridge import forward, MAX_BODY
+        _, session = self.session()
+        if not session:
+            return self.respond(401, {'error': 'Please sign in'})
+        started = False
+        try:
+            size = int(self.headers.get('Content-Length', '0'))
+            if size < 0 or size > MAX_BODY:
+                return self.respond(413, {'error': 'Uploads are limited to 4 MB'})
+            value = {'method': self.command, 'path': self.path[len('/hermes'):],
+                     'cookie': self.headers.get('Cookie', ''),
+                     'content_type': self.headers.get('Content-Type', 'application/json'),
+                     'csrf': self.headers.get('X-Hermes-CSRF-Token', ''),
+                     'last_event_id': self.headers.get('Last-Event-ID', ''),
+                     'body': base64.b64encode(self.rfile.read(size)).decode()}
+            def start(status, headers):
+                nonlocal started
+                self.send_response(status)
+                for name, value in headers:
+                    self.send_header(name, value)
+                self.send_header('Connection', 'close')
+                self.end_headers()
+                started = True
+            def write(chunk):
+                self.wfile.write(chunk)
+                self.wfile.flush()
+            forward(value, start, write)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        except Exception:
+            if not started:
+                self.respond(502, {'error': 'Hermes interface is unavailable. Reload to retry.'})
+        finally:
+            self.close_connection = True
+
+    def do_HEAD(self):
+        if self.path.startswith('/hermes/') and self.allowed_host():
+            return self.webui()
+        self.send_response(404)
+        self.end_headers()
+
+    def do_PUT(self):
+        if self.path.startswith('/hermes/'):
+            return self.do_POST()
+        return self.respond(405, {'error': 'Method not allowed'})
+
+    do_PATCH = do_PUT
+    do_DELETE = do_PUT
+
     def allowed_host(self):
         return self.headers.get("Host") in {f"localhost:{self.server.server_port}", f"127.0.0.1:{self.server.server_port}"}
 
@@ -306,6 +357,13 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.allowed_host():
             return self.respond(403, {"error": "Invalid host"})
+        if self.path == '/hermes':
+            self.send_response(302)
+            self.send_header('Location', '/hermes/')
+            self.end_headers()
+            return
+        if self.path.startswith('/hermes/'):
+            return self.webui()
         path = unquote(urlsplit(self.path).path)
         assets = {"/": ("index.html", "text/html"), "/app.js": ("app.js", "application/javascript"), "/style.css": ("style.css", "text/css"), "/favicon.svg": ("favicon.svg", "image/svg+xml")}
         if path in assets:
@@ -337,6 +395,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self.allowed_host() or self.headers.get("Origin") != "http://" + self.headers.get("Host", ""):
             return self.respond(403, {"error": "Request origin rejected"})
+        if self.path.startswith('/hermes/'):
+            return self.webui()
         try:
             size = int(self.headers.get("Content-Length", "0"))
             if size < 0 or size > 4096:

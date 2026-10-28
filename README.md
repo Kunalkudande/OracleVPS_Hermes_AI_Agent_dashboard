@@ -15,6 +15,10 @@ The sign-in page deploys without secrets, but live API access returns a setup me
 
 ## Features
 
+- **Hermes interface:** the full Hermes WebUI embedded in the control-room sidebar,
+  using the existing VPS profile for chat, scheduler, Kanban, skills and memory.
+  Includes reload and full-screen controls. The dashboard login protects every
+  dynamic WebUI request; no additional public VPS port is opened.
 - **Today:** a saved morning briefing at 08:00 IST with recent saved research,
   scheduled work, publishing status and attention items.
 - **Content analyst:** a saved Sunday 18:00 IST review with sample sizes, missing
@@ -59,6 +63,40 @@ npm test
 npm run test:backend
 npm run build
 ```
+
+## Hermes WebUI integration
+
+The VPS runs `nesquena/hermes-webui` at revision
+`516321171c74e817f2c8d84773fc1067e8792fde`, on loopback port 8787, with
+`hermes-webui.service`. The service points to the existing `~/.hermes` profile;
+WebUI state lives in `~/.hermes/webui`. Its trusted identity header is supplied
+only by `webui_bridge.py` after validating a current control-room session.
+Direct requests without that identity remain unauthenticated.
+
+The `/hermes/` Vercel function streams through the existing pinned, forced-command
+SSH connection. `bridge.py` dispatches only the exact `hermes-webui-api` command to
+the fixed port 8787 bridge. The older operations API keeps its route allowlist.
+WebUI retains its CSRF protection; the integration permits framing only from the
+same origin and scopes WebUI cookies to `/hermes/`. Signing out of the control
+room unloads the iframe and invalidates subsequent WebUI requests.
+
+`npm run build` downloads only the pinned upstream public frontend into an ignored
+cache and includes it in `dist/hermes/static`. No profile data or credentials are
+bundled. Keep the build revision and VPS checkout synchronized when upgrading.
+Requests through Vercel have a 4 MB upload limit and a 285-second connection
+limit; WebUI reconnects its event streams. WebSocket-only features require a
+direct private connection and are not carried by this HTTP bridge.
+
+Deployment: copy `webui_bridge.py` with `bridge.py` and `server.py` to
+`~/hermes-control/`, install the supplied user unit, and restart the control
+server. Install WebUI separately at the pinned revision. No model-provider or
+scheduler changes are required. Restarting the control server expires dashboard
+sessions. The local SSH dashboard also serves the `/hermes/` mount.
+
+Rollback: revert the frontend integration commit, restore the control-server
+files from `~/hermes-control/backups/pre-webui-20261028/`, restart
+`hermes-control`, and stop/disable `hermes-webui`. Preserve `~/.hermes/webui`
+to retain conversations; never remove the existing Hermes home.
 
 Use Node.js 22.x and Python 3.11+. Node tests cover route allowlists, origin validation, host-key pinning and fail-closed configuration. Python tests cover authentication, logout/expiry, CSRF, rate limits, report traversal/redaction, bridge validation and verification of schedule changes. Tests use temporary data, not real jobs.
 

@@ -5,6 +5,7 @@ auth.json
 node_modules/
 dist/
 .vercel/
+.webui-assets/
 .env
 .env.*
 !.env.example

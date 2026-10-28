@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import signal
 import sys
+import os
 
 GET = re.compile(r"/api/(?:health|session|status|workspace|reports/[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,150}\.md)")
 POST = re.compile(r"/api/(?:login|logout|knowledge/(?:search|save)|jobs/[A-Za-z0-9_-]{1,100}/(?:pause|resume))")
@@ -31,6 +32,15 @@ def validate(value):
 
 
 def main():
+    if os.environ.get('SSH_ORIGINAL_COMMAND') == 'hermes-webui-api':
+        # -I intentionally excludes this directory; add only our fixed code path.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from webui_bridge import run_ssh
+        signal.alarm(15)
+        raw = sys.stdin.buffer.read(5_400_001)
+        if len(raw) > 5_400_000:
+            raise ValueError('Request too large')
+        return run_ssh(json.loads(raw))
     signal.alarm(30)
     value = validate(json.loads(sys.stdin.buffer.read(16001)))
     auth = json.loads((Path.home() / ".local/state/hermes-control/auth.json").read_text())
