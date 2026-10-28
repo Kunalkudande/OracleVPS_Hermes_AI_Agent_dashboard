@@ -53,6 +53,10 @@ def response_headers(headers):
     allowed = {'content-type', 'content-disposition', 'content-security-policy',
                'content-security-policy-report-only', 'permissions-policy'}
     result = []
+    if any(name.lower() == 'content-type' and value.startswith('text/html') for name, value in headers):
+        # Remove only the old mount-scoped cookie from the initial integration;
+        # the dashboard's same-named Path=/ cookie must remain intact.
+        result.append(['set-cookie', 'hermes_session=; Path=/hermes/; HttpOnly; SameSite=Strict; Max-Age=0'])
     for name, value in headers:
         name = name.lower()
         if name in allowed:

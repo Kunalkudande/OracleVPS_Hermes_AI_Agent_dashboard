@@ -5,6 +5,13 @@ import webui_bridge as bridge
 
 
 class WebUIBridgeTests(unittest.TestCase):
+    def test_webui_has_distinct_cookie_and_migrates_only_old_mount_cookie(self):
+        from pathlib import Path
+        unit = Path(__file__).with_name('hermes-webui.service').read_text()
+        self.assertIn('HERMES_WEBUI_COOKIE_NAME=hermes_webui_session', unit)
+        cookies = [v for k, v in bridge.response_headers([('Content-Type', 'text/html')]) if k == 'set-cookie']
+        self.assertEqual(cookies, ['hermes_session=; Path=/hermes/; HttpOnly; SameSite=Strict; Max-Age=0'])
+
     def test_fixed_destination_rejects_injection_and_traversal(self):
         for path in ['https://evil.example/', '//evil.example/', '/%2e%2e/auth', '/api/\r\nX: bad', '/a%5cb', '/api/status#x']:
             with self.subTest(path=path), self.assertRaises(ValueError):

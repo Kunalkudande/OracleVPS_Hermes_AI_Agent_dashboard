@@ -12,6 +12,7 @@ Environment=HERMES_WEBUI_HOST=127.0.0.1
 Environment=HERMES_WEBUI_PORT=8787
 Environment=HERMES_WEBUI_TRUSTED_AUTH_HEADER=X-Hermes-Control-User
 Environment=HERMES_WEBUI_TRUSTED_PROXY_CIDRS=127.0.0.1/32
+Environment=HERMES_WEBUI_COOKIE_NAME=hermes_webui_session
 Environment=HERMES_WEBUI_SKIP_ONBOARDING=1
 Environment=HERMES_WEBUI_MAX_UPLOAD_MB=4
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
