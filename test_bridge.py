@@ -10,10 +10,14 @@ class BridgeTests(unittest.TestCase):
         self.assertEqual(validate(self.request())["path"], "/api/status")
         data = self.request(); data['path'] = '/api/workspace'
         self.assertEqual(validate(data)['path'], '/api/workspace')
+        data['path']='/api/job-search'
+        self.assertEqual(validate(data)['path'],'/api/job-search')
+        data.update(method='POST',path='/api/job-search/status',body='{}')
+        self.assertEqual(validate(data)['path'],'/api/job-search/status')
         for path in ['/api/knowledge/search', '/api/knowledge/save']:
             data = self.request(); data.update(method='POST', path=path, body='{}')
             self.assertEqual(validate(data)['path'], path)
-        for path in ["/api/config", "/api/reports/a/../../auth.json", "http://localhost/", "/api/status?url=x"]:
+        for path in ["/api/config", "/api/reports/a/../../auth.json", "http://localhost/", "/api/status?url=x", '/api/job-search/send', '/api/job-search/sync']:
             data=self.request(); data["path"]=path
             with self.assertRaises(ValueError): validate(data)
 

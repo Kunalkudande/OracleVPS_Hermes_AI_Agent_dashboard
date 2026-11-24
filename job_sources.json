@@ -1,0 +1,221 @@
+[
+  {
+    "id": "aiprise",
+    "company": "AiPrise",
+    "kind": "ashby",
+    "url": "https://api.ashbyhq.com/posting-api/job-board/aiprise?includeCompensation=true"
+  },
+  {
+    "id": "sarvam",
+    "company": "Sarvam",
+    "kind": "ashby",
+    "url": "https://api.ashbyhq.com/posting-api/job-board/sarvam?includeCompensation=true"
+  },
+  {
+    "id": "rezifi-fullstack",
+    "company": "Rezifi",
+    "kind": "page",
+    "url": "https://rezifi.com/careers/fresher-full-stack-developer",
+    "openings": [
+      {
+        "title": "Fresher Full Stack SDE",
+        "location": "Remote, India",
+        "workplace": "Remote",
+        "start": "Fresher Full Stack SDE",
+        "end": "Not quite you?",
+        "require": [
+          "up to two years",
+          "TypeScript",
+          "React",
+          "India",
+          "Remote"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "rezifi-backend",
+    "company": "Rezifi",
+    "kind": "page",
+    "url": "https://rezifi.com/careers/fresher-backend-developer",
+    "openings": [
+      {
+        "title": "Fresher Backend Engineer",
+        "location": "Remote, India",
+        "workplace": "Remote",
+        "start": "Fresher Backend Engineer",
+        "end": "Not quite you?",
+        "require": [
+          "Node",
+          "Postgres",
+          "India",
+          "Remote"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unico",
+    "company": "Unico Connect",
+    "kind": "page",
+    "url": "https://unicoconnect.com/careers/full-stack-engineer",
+    "openings": [
+      {
+        "title": "Full Stack Engineer",
+        "location": "Mumbai, India",
+        "workplace": "OnSite",
+        "start": "Full Stack Engineer",
+        "end": "AI Tools Proficiency",
+        "require": [
+          "Mumbai",
+          "1-3 years",
+          "Node.js"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "workwise",
+    "company": "Workwise",
+    "kind": "page",
+    "url": "https://letsworkwise.com/work-with-us/careers",
+    "openings": [
+      {
+        "title": "SDE-1, Full Stack Developer - AWS",
+        "location": "Mumbai, India",
+        "start": "SDE-1, Full Stack Developer",
+        "end": "Apply Now",
+        "require": [
+          "Mumbai",
+          "Node.js",
+          "PostgreSQL"
+        ]
+      },
+      {
+        "title": "SDE-1",
+        "location": "Bengaluru, India",
+        "start": "SDE-1\n",
+        "end": "Apply Now",
+        "require": [
+          "Bengaluru",
+          "Node.js",
+          "PostgreSQL"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mithi",
+    "company": "Mithi",
+    "kind": "page",
+    "url": "https://mithi.com/careers/full-stack-developer-wfo/",
+    "openings": [
+      {
+        "title": "Full Stack Developer",
+        "location": "Pune, India",
+        "workplace": "OnSite",
+        "start": "Full Stack Developer (WFO)",
+        "end": "Apply now",
+        "require": [
+          "Pune",
+          "0-2 years",
+          "Node.js"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "buildsinfinity",
+    "company": "BuildsInfinity",
+    "kind": "page",
+    "url": "https://buildsinfinity.com/careers",
+    "openings": [
+      {
+        "title": "Full-Stack Engineer",
+        "location": "Remote, India / Noida",
+        "workplace": "Remote",
+        "start": "Full-timeEngineeringNoida / Remote (India)",
+        "end": "Full-timeDesign",
+        "require": [
+          "Full-Stack Engineer",
+          "Node",
+          "TypeScript",
+          "Remote"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "justeducation",
+    "company": "Just Education",
+    "kind": "page",
+    "url": "https://justeducation.in/careers/full-stack-software-engineer",
+    "openings": [
+      {
+        "title": "Full Stack Software Engineer",
+        "location": "Remote, India",
+        "workplace": "Remote",
+        "start": "Full Stack Software Engineer",
+        "end": "Selection Process",
+        "require": [
+          "Remote, India",
+          "2+ years",
+          "Prisma",
+          "Remote"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bik",
+    "company": "BIK",
+    "kind": "page",
+    "url": "https://comida.keka.com/careers/jobdetails/63647",
+    "openings": [
+      {
+        "title": "Software Engineer",
+        "location": "Bengaluru, India",
+        "workplace": "OnSite",
+        "start": "Job Summary",
+        "end": "Interview Process",
+        "require": [
+          "Bengaluru",
+          "2+ Years",
+          "Node.js",
+          "React"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "infynod",
+    "company": "Infynod",
+    "kind": "page",
+    "url": "https://www.infynod.com/careers",
+    "openings": [
+      {
+        "title": "Full Stack Developer (Next.js / Node)",
+        "location": "Pune, India",
+        "workplace": "Hybrid",
+        "start": "Full Stack Developer (Next.js / Node)",
+        "end": "UI/UX Designer",
+        "require": [
+          "Pune",
+          "2\u20134 years",
+          "React"
+        ]
+      },
+      {
+        "title": "Full Stack Node.js / Next.js Engineer",
+        "location": "Pune, India",
+        "workplace": "Hybrid",
+        "start": "Full Stack Node.js / Next.js Engineer",
+        "require": [
+          "Pune",
+          "2\u20134 years",
+          "PostgreSQL"
+        ]
+      }
+    ]
+  }
+]

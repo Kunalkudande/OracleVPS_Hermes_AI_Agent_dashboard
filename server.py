@@ -18,6 +18,7 @@ import threading
 import time
 from urllib.parse import urlsplit, unquote
 from personal import Personal
+from jobsearch import JobSearch
 
 ROOT = Path(__file__).resolve().parent
 SAFE = re.compile(r"^[a-zA-Z0-9_-]{1,100}$")
@@ -72,6 +73,9 @@ class Hermes:
 
     def personal(self):
         return Personal(self.audit.parent / 'personal')
+
+    def job_search(self):
+        return JobSearch(self.audit.parent / 'jobsearch')
 
     def workspace(self):
         personal = self.personal()
@@ -381,6 +385,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.respond(200, self.server.backend.snapshot())
             if path == "/api/workspace":
                 return self.respond(200, self.server.backend.workspace())
+            if path == '/api/job-search':
+                return self.respond(200, self.server.backend.job_search().listing())
             match = re.fullmatch(r"/api/reports/([\w-]+)/([\w.-]+)", path)
             if match:
                 return self.respond(200, {"text": self.server.backend.output(*match.groups())})
@@ -445,6 +451,13 @@ class Handler(BaseHTTPRequestHandler):
             with self.server.lock:
                 self.server.sessions.pop(token, None)
             return self.respond(200, {"ok": True}, cookie="hermes_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0")
+        if path == '/api/job-search/status':
+            try:
+                return self.respond(200, self.server.backend.job_search().set_status(body.get('id'), body.get('status')))
+            except ValueError as error:
+                return self.respond(400, {'error': str(error)})
+            except Exception:
+                return self.respond(503, {'error': 'Job status could not be saved. Refresh to check.'})
         if path in ('/api/knowledge/search', '/api/knowledge/save'):
             try:
                 personal = self.server.backend.personal()

@@ -16,3 +16,5 @@ login.txt
 vercel-settings.txt
 # Existing machine-specific launcher is kept locally, not deployed to Vercel.
 Open-HermesDashboard.ps1
+.jobsearch-state/
+.jobsearch-qa/

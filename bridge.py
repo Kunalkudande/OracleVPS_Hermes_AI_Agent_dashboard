@@ -7,8 +7,8 @@ import signal
 import sys
 import os
 
-GET = re.compile(r"/api/(?:health|session|status|workspace|reports/[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,150}\.md)")
-POST = re.compile(r"/api/(?:login|logout|knowledge/(?:search|save)|jobs/[A-Za-z0-9_-]{1,100}/(?:pause|resume))")
+GET = re.compile(r"/api/(?:health|session|status|workspace|job-search|reports/[A-Za-z0-9_-]{1,100}/[A-Za-z0-9_.-]{1,150}\.md)")
+POST = re.compile(r"/api/(?:login|logout|job-search/status|knowledge/(?:search|save)|jobs/[A-Za-z0-9_-]{1,100}/(?:pause|resume))")
 
 
 def validate(value):

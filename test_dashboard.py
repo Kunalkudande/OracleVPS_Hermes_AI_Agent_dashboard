@@ -12,6 +12,15 @@ from server import App, Hermes, scrub, publication_status
 
 
 class DashboardTests(unittest.TestCase):
+    def test_job_search_routes_require_auth_and_csrf(self):
+        self.assertEqual(self.request('/api/job-search')[0],401)
+        self.login()
+        self.assertEqual(self.request('/api/job-search')[0],200)
+        self.assertEqual(self.request('/api/job-search/status',{'id':'a'*20,'status':'saved'},csrf=False)[0],403)
+        self.assertEqual(self.request('/api/job-search/status',{'id':'a'*20,'status':'saved'})[0],400)
+        self.assertEqual(self.request('/api/job-search/status',{'id':'../bad','status':'applied'})[0],400)
+        self.assertEqual(self.request('/api/job-search/send',{})[0],404)
+
     def test_personal_routes_require_auth_csrf_and_save_recall(self):
         self.assertEqual(self.request('/api/workspace')[0], 401)
         self.login()

@@ -2,8 +2,8 @@
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let csrf = '', snapshot = null, currentView = 'today', busy = false, toastTimer;
-const viewNames = {hermes:'Hermes interface', today:'Today', knowledge:'Knowledge', analyst:'Content analyst', overview:'Overview', automations:'Automations', publishing:'X publishing', activity:'Run history', system:'System'};
-const headings = {hermes:['Your Hermes workspace.','Everything you need to work with your agent.'],today:['A little clarity for your day.','Your morning briefing and the work that needs you.'],knowledge:['Keep what you learn.','Find source passages in your research and save useful notes.'],analyst:['Learn from what you publish.','Evidence, sample sizes and practical experiments for AI Orbit.'],overview:['Your agent, at a glance.','A clear view of the work happening in the background.'],automations:['Make room for the right work.','See every schedule and control what happens next.'],publishing:['Good ideas, on their way.','Your upcoming posts and the evidence of what was published.'],activity:['Every run leaves a trail.','Inspect saved reports to understand what actually happened.'],system:['A view behind the scenes.','Service health, server capacity, and the limits of what we can verify.']};
+const viewNames = {jobsearch:'Jobs',hermes:'Hermes interface', today:'Today', knowledge:'Knowledge', analyst:'Content analyst', overview:'Overview', automations:'Automations', publishing:'X publishing', activity:'Run history', system:'System'};
+const headings = {jobsearch:['Find your next chapter.','Openings matched to your experience, with the evidence to decide.'],hermes:['Your Hermes workspace.','Everything you need to work with your agent.'],today:['A little clarity for your day.','Your morning briefing and the work that needs you.'],knowledge:['Keep what you learn.','Find source passages in your research and save useful notes.'],analyst:['Learn from what you publish.','Evidence, sample sizes and practical experiments for AI Orbit.'],overview:['Your agent, at a glance.','A clear view of the work happening in the background.'],automations:['Make room for the right work.','See every schedule and control what happens next.'],publishing:['Good ideas, on their way.','Your upcoming posts and the evidence of what was published.'],activity:['Every run leaves a trail.','Inspect saved reports to understand what actually happened.'],system:['A view behind the scenes.','Service health, server capacity, and the limits of what we can verify.']};
 const pill = (state, label) => `<span class="pill ${esc(state)}">${esc(label || ({ok:'Successful',failed:'Failed',paused:'Paused',ready:'Ready',empty:'Needs a draft',published:'Published',skipped:'Skipped',uncertain:'Needs review',unknown:'Unknown',silent:'Silent check',active:'Active',fresh:'Fresh',stale:'Stale',unavailable:'Unavailable',inactive:'Inactive',unverified:'Unverified'}[state] || state))}</span>`;
 function date(value, options={}) { if(!value) return '—'; const d=new Date(value); return Number.isNaN(+d)?'Unknown':new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:true,...options}).format(d); }
 function clock(value) { return date(value,{day:undefined,month:undefined}); }
@@ -58,7 +58,7 @@ async function refreshWorkspace() {
   if(!$('knowledge-question').value.trim())showKnowledge(data.knowledge);
  }catch(error){$('briefing-time').textContent='Refresh failed';$('analyst-time').textContent='Refresh failed';toast(`Personal workspace: ${error.message}`);}
 }
-async function refresh() {if(busy||!csrf)return;busy=true;$('refresh').disabled=true;try{render(await api('/api/status'));await refreshWorkspace();}catch(error){$('fetch-error').hidden=false;$('fetch-error').textContent=`${error.message} Displayed values may be stale; last successful observation: ${snapshot?date(snapshot.observed_at)+' IST':'none'}.`;$('connection-text').textContent='Connection interrupted';}finally{busy=false;$('refresh').disabled=false;} }
+async function refresh() {if(busy||!csrf)return;busy=true;$('refresh').disabled=true;try{render(await api('/api/status'));await refreshWorkspace();await refreshJobSearch();}catch(error){$('fetch-error').hidden=false;$('fetch-error').textContent=`${error.message} Displayed values may be stale; last successful observation: ${snapshot?date(snapshot.observed_at)+' IST':'none'}.`;$('connection-text').textContent='Connection interrupted';}finally{busy=false;$('refresh').disabled=false;} }
 async function report(jid, filename, name) { $('report-title').textContent=name||'Run report';$('report-text').textContent='Loading saved report…';$('report-dialog').showModal();try{const result=await api(`/api/reports/${encodeURIComponent(jid)}/${encodeURIComponent(filename)}`);$('report-text').textContent=result.text;}catch(error){$('report-text').textContent=error.message;} }
 async function control(button) { const job=snapshot.jobs.find(j=>j.id===button.dataset.job);if(!job)return;const action=button.dataset.action;$('confirm-title').textContent=`${action==='pause'?'Pause':'Resume'} ${job.name}?`;$('confirm-copy').textContent=action==='pause'?'This stops future automatic runs. A task already running will continue.':'This enables future automatic runs using the existing schedule. This may lead to email delivery or public posting if that is what the workflow does.';$('confirm-action').textContent=action==='pause'?'Pause schedule':'Resume schedule';const dialog=$('confirm-dialog');dialog.returnValue='cancel';dialog.showModal();const accepted=await new Promise(resolve=>dialog.addEventListener('close',()=>resolve(dialog.returnValue==='confirm'),{once:true}));if(!accepted)return;button.disabled=true;try{const result=await api(`/api/jobs/${encodeURIComponent(job.id)}/${action}`,{});toast(result.message);await refresh();}catch(error){toast(error.message);}finally{button.disabled=false;} }
 $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button');button.disabled=true;$('login-error').textContent='';try{const session=await api('/api/login',{password:$('password').value});csrf=session.csrf;$('password').value='';showApp();await refresh();}catch(error){$('login-error').textContent=error.message;}finally{button.disabled=false;}});
@@ -78,3 +78,35 @@ function openHermes(force=false) {
 }
 $('hermes-reload').addEventListener('click',()=>openHermes(true));
 $('hermes-frame').addEventListener('load',()=>{$('hermes-loading').hidden=true;});
+
+let jobSearchData = null;
+async function refreshJobSearch() {
+ try { jobSearchData=await api('/api/job-search');renderJobSearch(); }
+ catch(error){$('job-search-health').textContent=`Jobs could not refresh: ${error.message}. Displayed results may be stale.`;}
+}
+function renderJobSearch() {
+ if(!jobSearchData)return;
+ const data=jobSearchData, filter=$('job-search-status').value, query=$('job-search-query').value.trim().toLowerCase();
+ const rows=data.jobs.filter(j=>(filter==='all'||filter==='active'&&j.listing_state==='active'&&j.assessment.eligible&&!['dismissed','rejected'].includes(j.status)||j.status===filter)&&(!query||`${j.company} ${j.title} ${j.location}`.toLowerCase().includes(query)));
+ $('job-search-count').textContent=`${rows.length} shown · ${data.total} tracked`;
+ const p=data.profile;
+ $('job-search-profile').textContent=p?`${p.locations.join(' · ')} · Remote India | ${p.notice_period} notice | ${p.salary_preference}`:'Your search profile has not been configured.';
+ const r=data.last_run;
+ $('job-search-health').textContent=r?`Last search ${date(r.at)} IST: ${r.openings_scanned} openings checked across ${r.sources_ok}/${r.sources_total} employer sources.${r.failures.length?' Some sources failed; coverage is incomplete.':''}${data.truncated?' Showing the first 200 tracked jobs.':''}`:'The first employer search has not run yet.';
+ $('job-search-results').innerHTML=rows.length?rows.map(j=>{
+  const a=j.assessment, exp=a.experience_min===null?'Experience not stated':`${a.experience_min}${a.experience_max!==null?'–'+a.experience_max:'+'} years`;
+  return `<article class="panel job-card"><div class="job-card-top"><span class="eyebrow">${esc(j.company)}</span>${pill(a.fit==='strong'?'ok':a.fit==='stretch'?'paused':'neutral',a.fit+' fit')}</div><h2>${esc(j.title)}</h2><p>${esc(j.location)}${j.workplace?' · '+esc(j.workplace):''}</p><div class="job-tags"><span>${esc(exp)}</span><span>${esc(a.salary||'Salary undisclosed')}</span><span>${esc(a.priority)} role</span></div><h3>Why it matches</h3><ul>${a.reasons.map(t=>`<li>${esc(t)}</li>`).join('')}</ul><h3>What to check</h3><ul>${a.gaps.map(t=>`<li>${esc(t)}</li>`).join('')}${a.excluded.map(t=>`<li>${esc(t)}</li>`).join('')}</ul><p class="muted">Listing: ${esc(j.listing_state)} · Last seen ${esc(date(j.last_seen))} IST${j.reserved_at?' · Selected for a daily digest':''}</p><div class="job-card-actions">${sourceLink(j.url).replace('Source ↗','Employer listing ↗')}<label>Status <select data-job-search-id="${esc(j.id)}" aria-label="Application status for ${esc(j.company+' '+j.title)}">${data.states.map(s=>`<option value="${esc(s)}" ${s===j.status?'selected':''}>${esc(s[0].toUpperCase()+s.slice(1))}</option>`).join('')}</select></label></div></article>`;
+ }).join(''):'<div class="panel empty">No jobs match this view. Check source coverage below or change the filter.</div>';
+ $('job-search-checked').textContent=r?date(r.at)+' IST':'';
+ $('job-search-coverage').textContent=data.coverage;
+ $('job-search-sources').innerHTML=data.sources.map(s=>`<div class="service-row"><div><strong>${esc(s.company)}</strong><p>${s.ok?`${s.count} listings read`:`Fetch failed (${esc(s.error)}); previous listings are unverified`} · ${esc(date(s.checked_at))} IST</p></div>${pill(s.ok?'ok':'failed',s.ok?'Checked':'Needs attention')}</div>`).join('');
+ $('job-search-delivery').textContent=data.last_digest?`Latest digest prepared ${date(data.last_digest.at)} IST. Delivery outcome is recorded separately in Automations / Run history.`:'No daily digest prepared yet.';
+}
+$('job-search-status').addEventListener('change',renderJobSearch);
+$('job-search-query').addEventListener('input',renderJobSearch);
+$('job-search-results').addEventListener('change',async event=>{
+ const el=event.target;if(!el.dataset.jobSearchId)return;el.disabled=true;
+ try {await api('/api/job-search/status',{id:el.dataset.jobSearchId,status:el.value});toast('Application tracker updated.');await refreshJobSearch();}
+ catch(error){toast(error.message);await refreshJobSearch();}
+ finally{el.disabled=false;}
+});
